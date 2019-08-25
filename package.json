@@ -1,0 +1,27 @@
+{
+  "name": "fire-schema",
+  "version": "1.0.0",
+  "description": "Structure your Firebase Realtime Database with schemas.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sheminusminus/fire-schema.git"
+  },
+  "author": "Emily Kolar <emkolar@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sheminusminus/fire-schema/issues"
+  },
+  "homepage": "https://github.com/sheminusminus/fire-schema#readme",
+  "devDependencies": {
+    "@firebase/app": "^0.4.15",
+    "@firebase/app-types": "^0.4.3",
+    "firebase-admin": "^8.4.0"
+  },
+  "engines": {
+    "node": ">=8"
+  }
+}
