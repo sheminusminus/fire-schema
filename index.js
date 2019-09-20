@@ -23,10 +23,6 @@ FireSchema.registerApp = (app, options = {}) => {
   adminApp = app;
 };
 
-const registerApp = (app, options) => {
-  FireSchema.registerApp(app, options);
-};
-
 
 /**
  * Create models
@@ -168,6 +164,12 @@ const createPrimaryKeyValidator = primaryKeyParam => async (
 ) => ({
   valid: !!_.get(paramPath, values),
 });
+
+
+const registerApp = (app, options) => {
+  FireSchema.registerApp(app, options);
+  return app;
+};
 
 
 /**
