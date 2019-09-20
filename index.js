@@ -27,11 +27,11 @@ FireSchema.registerApp = (app, options = {}) => {
 /**
  * Create models
  * @param {string} name
- * @param {schema} schema
+ * @param {schema} _schema
  * @param {Object?} relationships
  * @return {Class}
  */
-const createModel = (name, schema, relationships = {}) => {
+const createModel = (name, _schema, relationships = {}) => {
   if (adminApp === undefined) {
     throw new Error('FireSchema.registerApp must be called before creating models');
   }
@@ -49,6 +49,25 @@ const createModel = (name, schema, relationships = {}) => {
 
         Object.keys(parsedParams).forEach((key) => {
           this.values[key] = parsedParams[key];
+
+          const param = FireSchema.models[name].schema.params[key];
+          const type = param ? param.type : undefined;
+          console.log(key, type);
+          if (type) {
+            if (schema.isSchema(type)) {
+              this[`get${changeCase.upperCaseFirst(key)}`] = () => {
+                console.log('get single', key);
+              };
+            }
+
+            if (Array.isArray(type)) {
+              if (type.length > 0 && schema.isSchema(type[0].type)) {
+                this[`get${changeCase.upperCaseFirst(pluralize(key))}`] = () => {
+                  console.log('get multi', key);
+                };
+              }
+            }
+          }
         });
       } catch (e) {
         console.log('error on initialize', e);
@@ -72,7 +91,7 @@ const createModel = (name, schema, relationships = {}) => {
   // Model.db = adminApp.database();
   FireSchema.models[name].modelName = name;
   FireSchema.models[name].relationships = relationships;
-  FireSchema.models[name].schema = schema;
+  FireSchema.models[name].schema = _schema;
   FireSchema.models[name].refPath = changeCase.snakeCase(pluralize(name));
   FireSchema.models[name].init = async (values) => {
     const entity = new FireSchema.models[name](FireSchema.models[name].schema.primaryKey);
