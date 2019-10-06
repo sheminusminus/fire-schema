@@ -4,6 +4,7 @@
   "description": "Structure your Firebase Realtime Database with schemas.",
   "main": "index.js",
   "scripts": {
+    "build": "babel src --out-dir build",
     "start": "nodemon --exec babel-node demo.js",
     "test:cov": "jest --coverage",
     "test:setup": "babel-node test/setup.js",
