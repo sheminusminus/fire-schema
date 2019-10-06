@@ -59,6 +59,44 @@ const createModel = (name, _schema, relationships = {}) => {
       }
     }
 
+    static get modelPlural() {
+      return changeCase.snakeCase(pluralize(this.modelName)).toLowerCase();
+    }
+
+    static get modelSingular() {
+      return changeCase.snakeCase(this.modelName).toLowerCase();
+    }
+
+    static async getIncluded(data = {}, model = undefined, as = undefined) {
+      if (model) {
+        if (as) {
+          const includedData = _.get(data, as);
+
+          if (includedData) {
+            if (pluralize(as) === as) {
+              return _.map(includedData, (d) => model.init(d));
+            }
+
+            return model.init(includedData);
+          }
+        } else {
+          let includedData = _.get(data, model.modelSingular);
+
+          if (includedData) {
+            return model.init(includedData);
+          }
+
+          includedData = _.get(data, model.modelPlural);
+
+          if (includedData) {
+            return _.map(includedData, (d) => model.init(d));
+          }
+        }
+      }
+
+      return undefined;
+    }
+
     /**
      * @param {{ where: *, include: * }} options
      * @return {Promise<?Object>}
@@ -155,10 +193,6 @@ const createModel = (name, _schema, relationships = {}) => {
 
     get schemaParams() {
       return FireSchema.models[this.modelName].schema.params;
-    }
-
-    static get modelPlural() {
-      return changeCase.snakeCase(pluralize(this.modelName)).toLowerCase();
     }
   };
 
