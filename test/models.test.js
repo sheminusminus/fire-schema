@@ -12,7 +12,7 @@ const {
 
 const fullData = require('./data');
 
-const serviceAccount = JSON.parse(process.env.GOOGLE_CREDS);
+const serviceAccount = require('./fire-schema-firebase.json');
 
 registerApp(
   admin.initializeApp({
