@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon --exec babel-node demo.js",
+    "test:cov": "jest --coverage",
     "test:setup": "babel-node test/setup.js",
     "test": "jest"
   },
