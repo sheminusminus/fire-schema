@@ -12,10 +12,11 @@ const {
 
 const fullData = require('./data');
 
+const serviceAccount = JSON.parse(process.env.GOOGLE_CREDS);
 
 registerApp(
   admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+    credential: admin.credential.cert(serviceAccount),
     databaseURL: process.env.DB_URL,
   }),
 );
