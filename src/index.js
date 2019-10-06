@@ -80,6 +80,22 @@ const createModel = (name, _schema, relationships = {}) => {
       return changeCase.snakeCase(this.modelName).toLowerCase();
     }
 
+    static hasMany(model, options = {}) {
+      const { as } = options;
+
+      const modelName = as || model.modelPlural;
+
+      if (this.relationships.hasMany) {
+        if (!this.relationships.hasMany[modelName]) {
+          this.relationships.hasMany[modelName] = model;
+        }
+      } else {
+        this.relationships.hasMany = {
+          [modelName]: model,
+        };
+      }
+    }
+
     static async getIncluded(data = {}, model = undefined, as = undefined) {
       if (model) {
         if (as) {
