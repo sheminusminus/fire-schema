@@ -114,36 +114,6 @@ const createModel = (name, _schema, relationships = {}) => {
       return this;
     }
 
-    static async getIncluded(data = {}, model = undefined, as = undefined) {
-      if (model) {
-        if (as) {
-          const includedData = _.get(data, as);
-
-          if (includedData) {
-            if (pluralize(as) === as) {
-              return _.map(includedData, (d) => model.init(d));
-            }
-
-            return model.init(includedData);
-          }
-        } else {
-          let includedData = _.get(data, model.modelSingular);
-
-          if (includedData) {
-            return model.init(includedData);
-          }
-
-          includedData = _.get(data, model.modelPlural);
-
-          if (includedData) {
-            return _.map(includedData, (d) => model.init(d));
-          }
-        }
-      }
-
-      return undefined;
-    }
-
     /**
      * @param {{ where: *, include: * }} options
      * @return {Promise<?Object>}
@@ -206,6 +176,86 @@ const createModel = (name, _schema, relationships = {}) => {
         }
 
         return undefined;
+      } catch (e) {
+        console.log('error on findOne', e);
+        throw e;
+      }
+    }
+
+    /**
+     * @param {{ where: *, include: * }} options
+     * @return {Promise<?Object>}
+     */
+    static async findAll(options = {}) {
+      try {
+        const { where = {} } = options;
+
+        const whereKeys = Object.keys(where);
+        const whereValues = Object.values(where);
+
+        if (whereKeys.length > 0) {
+          if (whereKeys.includes(this.schema.primaryKey)) {
+            const pkVal = where[this.schema.primaryKey];
+            const snapshot = await FireSchema
+              .admin
+              .database()
+              .ref(this.modelPlural)
+              .orderByChild(this.schema.primaryKey)
+              .equalTo(pkVal)
+              .once('value');
+
+            const data = snapshot.val() || {};
+            const resultsObj = _.toPlainObject(data);
+            const items = _.map(resultsObj, (d) => d);
+
+            const instances = [];
+
+            await items.reduce(async (instPromise, itemData) => {
+              await instPromise;
+              const instance = this.init(itemData, options);
+              instances.push(instance);
+            }, Promise.resolve());
+
+            return instances;
+          }
+
+          const initialSearchKey = whereKeys[0];
+          const restKeys = whereKeys.slice(1);
+          const initialSearchVal = whereValues[0];
+          const restValues = whereValues.slice(1);
+
+          const snapshot = await FireSchema
+            .admin
+            .database()
+            .ref(this.modelPlural)
+            .orderByChild(initialSearchKey)
+            .equalTo(initialSearchVal)
+            .once('value');
+
+          const data = snapshot.val() || {};
+          const resultsObj = _.toPlainObject(data);
+          const items = _.map(resultsObj, (d) => d);
+
+          const result = _.reduce(restKeys, (searchItems, currentKey, idx) => {
+            const currentValue = restValues[idx];
+
+            return searchItems.filter((item) => (
+              _.get(item, currentKey) === currentValue
+            ));
+          }, items);
+
+          const instances = [];
+
+          await result.reduce(async (instPromise, itemData) => {
+            await instPromise;
+            const instance = this.init(itemData, options);
+            instances.push(instance);
+          }, Promise.resolve());
+
+          return instances;
+        }
+
+        return [];
       } catch (e) {
         console.log('error on findOne', e);
         throw e;
