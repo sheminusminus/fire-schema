@@ -60,14 +60,19 @@ const createModel = (name, _schema, relationships = {}) => {
 
                   this.values[key] = [];
 
-                  if (_.find(include, (inc) => inc.model === model)) {
+                  const includeOption = _.find(include, (inc) => inc.model === model);
+
+                  if (includeOption) {
                     const itemKeys = Object.keys(data);
                     const pkName = model.schema.primaryKey;
 
                     await itemKeys.reduce(async (hasManyPromise, k) => {
                       await hasManyPromise;
 
-                      const item = await model.findOne({ where: { [pkName]: k } });
+                      const item = await model.findOne({
+                        where: { [pkName]: k },
+                        include: includeOption.include || [],
+                      });
 
                       this.values[key].push(item);
                     }, Promise.resolve());
