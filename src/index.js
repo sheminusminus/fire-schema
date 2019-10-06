@@ -76,8 +76,8 @@ const createModel = (name, _schema, relationships = {}) => {
 
                       this.values[key].push(item);
                     }, Promise.resolve());
-                  } else {
-                    this.values[key] = Array.isArray(data) ? data : Object.keys(data);
+                  } else if (data) {
+                    this.values[key] = data || Array.isArray(data) ? data : Object.keys(data);
                   }
                 }
 
@@ -212,17 +212,21 @@ const createModel = (name, _schema, relationships = {}) => {
       }
     }
 
+    /* eslint-disable no-unused-vars */
+    /* eslint-disable class-methods-use-this */
     makeGetterSingular(key) {
       return () => {
-        console.log('get single', key, this.values[key]);
+        // console.log('get single', key, this.values[key]);
       };
     }
 
     makeGetterMulti(key) {
       return () => {
-        console.log('get multi', key, this.values[key]);
+        // console.log('get multi', key, this.values[key]);
       };
     }
+    /* eslint-enable no-unused-vars */
+    /* eslint-enable class-methods-use-this */
 
     /* eslint-disable */
     delete() {
