@@ -49,13 +49,15 @@ const createModel = (name, _schema, relationships = {}) => {
 
             if (Array.isArray(type)) {
               if (type.length > 0 && schema.isSchema(type[0].type)) {
-                const desc = type[0].type;
-                defaultVal = desc.defaultValue;
+                const t = type[0].type;
+
+                defaultVal = t.defaultValue;
+
                 const data = values[key];
 
-                this.values[key] = data
-                  ? await Promise.all(await _.map(data, async (d) => desc.validate(d)))
-                  : defaultVal;
+                this.values[key] = await Promise.all(
+                  await _.map(data, async (d) => (t.validate(d))) || defaultVal,
+                );
 
                 this[`get${changeCase.upperCaseFirst(pluralize(key))}`] = this.makeGetterMulti(key);
               }
