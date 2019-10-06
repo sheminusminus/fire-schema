@@ -55,37 +55,76 @@ const createModel = (name, _schema, relationships = {}) => {
         return this;
       } catch (e) {
         console.log('error on initialize', e);
-        return undefined;
+        throw e;
       }
     }
 
-    async findOne(options = {}) {
+    /**
+     * @param {{ where: *, include: * }} options
+     * @return {Promise<?Object>}
+     */
+    static async findOne(options = {}) {
       try {
-        const parsedParams = await FireSchema.models[name].schema.validate(values);
+        const { where = {}, include = {} } = options;
 
-        Object.keys(parsedParams).forEach((key) => {
-          this.values[key] = parsedParams[key];
+        const whereKeys = Object.keys(where);
+        const whereValues = Object.values(where);
+        const includeKeys = Object.keys(include); // eslint-disable-line
 
-          const param = FireSchema.models[name].schema.params[key];
-          const type = param ? param.type : undefined;
-          console.log(key, type);
-          if (type) {
-            if (schema.isSchema(type)) {
-              this[`get${changeCase.upperCaseFirst(key)}`] = this.makeGetterSingular(key);
+        if (whereKeys.length > 0) {
+          if (whereKeys.includes(this.schema.primaryKey)) {
+            const pkVal = where[this.schema.primaryKey];
+            const snapshot = await FireSchema
+              .admin
+              .database()
+              .ref(this.modelPlural)
+              .orderByChild(this.schema.primaryKey)
+              .equalTo(pkVal)
+              .once('value');
+
+            const data = snapshot.val() || {};
+            const resultsObj = _.toPlainObject(data);
+            const items = _.map(resultsObj, (d) => d);
+
+            if (items.length > 0) {
+              return this.init(items[0]);
             }
+          } else {
+            const initialSearchKey = whereKeys[0];
+            const restKeys = whereKeys.slice(1);
+            const initialSearchVal = whereValues[0];
+            const restValues = whereValues.slice(1);
 
-            if (Array.isArray(type)) {
-              if (type.length > 0 && schema.isSchema(type[0].type)) {
-                this[`get${changeCase.upperCaseFirst(pluralize(key))}`] = this.makeGetterMulti(key);
-              }
+            const snapshot = await FireSchema
+              .admin
+              .database()
+              .ref(this.modelPlural)
+              .orderByChild(initialSearchKey)
+              .equalTo(initialSearchVal)
+              .once('value');
+
+            const data = snapshot.val() || {};
+            const resultsObj = _.toPlainObject(data);
+            const items = _.map(resultsObj, (d) => d);
+
+            const result = _.reduce(restKeys, (searchItems, currentKey, idx) => {
+              const currentValue = restValues[idx];
+
+              return searchItems.filter((item) => (
+                _.get(item, currentKey) === currentValue
+              ));
+            }, items);
+
+            if (result.length > 0) {
+              return this.init(result[0]);
             }
           }
-        });
+        }
 
-        return this;
-      } catch (e) {
-        console.log('error on initialize', e);
         return undefined;
+      } catch (e) {
+        console.log('error on findOne', e);
+        throw e;
       }
     }
 
@@ -116,6 +155,10 @@ const createModel = (name, _schema, relationships = {}) => {
 
     get schemaParams() {
       return FireSchema.models[this.modelName].schema.params;
+    }
+
+    static get modelPlural() {
+      return changeCase.snakeCase(pluralize(this.modelName)).toLowerCase();
     }
   };
 
