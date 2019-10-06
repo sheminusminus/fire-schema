@@ -33,7 +33,9 @@ const createModel = (name, _schema, relationships = {}) => {
       try {
         const parsedParams = await FireSchema.models[name].schema.validate(values);
 
-        await Object.keys(parsedParams).forEach(async (key) => {
+        await Object.keys(parsedParams).reduce(async (parsePromise, key) => {
+          await parsePromise;
+
           this.values[key] = parsedParams[key];
 
           const param = FireSchema.models[name].schema.params[key];
@@ -55,15 +57,31 @@ const createModel = (name, _schema, relationships = {}) => {
 
                 const data = values[key];
 
-                this.values[key] = await Promise.all(
-                  await _.map(data, async (d) => (t.validate(d))) || defaultVal,
-                );
+                if (FireSchema.models[name].relationships.hasMany[key]) {
+                  const model = FireSchema.models[name].relationships.hasMany[key];
+                  const itemKeys = Object.keys(data);
+                  const pkName = model.schema.primaryKey;
+
+                  this.values[key] = [];
+
+                  await itemKeys.reduce(async (hasManyPromise, k) => {
+                    await hasManyPromise;
+
+                    const item = await model.findOne({ where: { [pkName]: k } });
+
+                    this.values[key].push(item);
+                  }, Promise.resolve());
+                } else {
+                  this.values[key] = await Promise.all(
+                    await _.map(data, async (d) => (t.validate(d))) || defaultVal,
+                  );
+                }
 
                 this[`get${changeCase.upperCaseFirst(pluralize(key))}`] = this.makeGetterMulti(key);
               }
             }
           }
-        });
+        }, Promise.resolve());
 
         return this;
       } catch (e) {
@@ -85,14 +103,8 @@ const createModel = (name, _schema, relationships = {}) => {
 
       const modelName = as || model.modelPlural;
 
-      if (this.relationships.hasMany) {
-        if (!this.relationships.hasMany[modelName]) {
-          this.relationships.hasMany[modelName] = model;
-        }
-      } else {
-        this.relationships.hasMany = {
-          [modelName]: model,
-        };
+      if (!this.relationships.hasMany[modelName]) {
+        this.relationships.hasMany[modelName] = model;
       }
     }
 
@@ -228,6 +240,11 @@ const createModel = (name, _schema, relationships = {}) => {
   // Model.db = adminApp.database();
   FireSchema.models[name].modelName = name;
   FireSchema.models[name].relationships = relationships;
+
+  if (!FireSchema.models[name].relationships.hasMany) {
+    FireSchema.models[name].relationships.hasMany = {};
+  }
+
   FireSchema.models[name].schema = _schema;
   FireSchema.models[name].refPath = changeCase.snakeCase(pluralize(name));
   FireSchema.models[name].init = async (values) => {
