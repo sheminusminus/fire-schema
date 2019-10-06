@@ -920,10 +920,10 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
-"@sheminusminus/schm@0.4.4":
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/@sheminusminus/schm/-/schm-0.4.4.tgz#02ba56a90eaafb882b48441763438a94c4a31c77"
-  integrity sha512-61sv7VLihK02UDna2EW08DD3kvWYUzYE0kByCI2RUUcqa9dEtV1rJ1GM0fktFkwWlw1582bzy6cyr6PnG/JKSQ==
+"@sheminusminus/schm@0.4.5":
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/@sheminusminus/schm/-/schm-0.4.5.tgz#68d9adb35ce061e8104cb846b05c283d9d28ba18"
+  integrity sha512-Z80dMLMXLcsw0b6et6SI7bwKqdkTUbQCY6fVnVWYE/tx2AqZzAvb5Ulk/3nto3SBjL+hkNeDixju0IDmlR22BQ==
   dependencies:
     lodash "^4.17.10"
 

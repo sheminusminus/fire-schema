@@ -33,19 +33,30 @@ const createModel = (name, _schema, relationships = {}) => {
       try {
         const parsedParams = await FireSchema.models[name].schema.validate(values);
 
-        Object.keys(parsedParams).forEach((key) => {
+        await Object.keys(parsedParams).forEach(async (key) => {
           this.values[key] = parsedParams[key];
 
           const param = FireSchema.models[name].schema.params[key];
           const type = param ? param.type : undefined;
-          console.log(key, type);
+          let defaultVal = param ? param.defaultValue : undefined;
+
           if (type) {
             if (schema.isSchema(type)) {
+              const data = values[key] || defaultVal;
+              this.values[key] = await type.validate(data);
               this[`get${changeCase.upperCaseFirst(key)}`] = this.makeGetterSingular(key);
             }
 
             if (Array.isArray(type)) {
               if (type.length > 0 && schema.isSchema(type[0].type)) {
+                const desc = type[0].type;
+                defaultVal = desc.defaultValue;
+                const data = values[key];
+
+                this.values[key] = data
+                  ? await Promise.all(await _.map(data, async (d) => desc.validate(d)))
+                  : defaultVal;
+
                 this[`get${changeCase.upperCaseFirst(pluralize(key))}`] = this.makeGetterMulti(key);
               }
             }
