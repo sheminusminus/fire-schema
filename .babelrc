@@ -1,0 +1,16 @@
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "node": "current"
+        }
+      }
+    ]
+  ],
+  "plugins": [
+    ["@babel/plugin-syntax-decorators", { "decoratorsBeforeExport":  false }],
+    ["@babel/plugin-proposal-class-properties", { "loose":  true }]
+  ]
+}

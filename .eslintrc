@@ -1,0 +1,26 @@
+{
+  "extends": "airbnb-base",
+  "parser": "babel-eslint",
+  "globals": {
+    "Event": true
+  },
+  "rules": {
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": ["stories/**/*.js", "src/**/*.test.js", "/test.js"]}],
+    "import/no-named-as-default": ["off"],
+    "import/prefer-default-export": ["off"],
+    "import/no-unresolved": ["error", { "ignore":  [".+\\.css"] }],
+    "import/newline-after-import": ["error", { "count":  2 }],
+    "max-len": ["error", {"code":  120, "ignoreStrings":  true, "ignoreTemplateLiterals":  true}],
+    "no-console": ["off"],
+    "object-curly-newline": ["error", { "ImportDeclaration": { "multiline": true } }],
+    "operator-linebreak": ["error"],
+    "quotes": ["error", "single", { "allowTemplateLiterals": true }]
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": ["src"]
+      }
+    }
+  }
+}
