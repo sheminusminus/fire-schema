@@ -108,3 +108,8 @@ const Directory = createModel('Directory', directorySchema)
 const Collection = createModel('Collection', collectionSchema)
   .hasMany(Directory, { as: 'directories' });
 
+describe('config', () => {
+  it('runs', async () => {
+    expect(await Promise.resolve(true)).toEqual(true);
+  })
+});
