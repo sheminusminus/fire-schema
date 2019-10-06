@@ -29,7 +29,9 @@ const createModel = (name, _schema, relationships = {}) => {
       this.primaryKey = pk;
     }
 
-    async initialize(values) {
+    async initialize(values, options = {}) {
+      const { include = [] } = options;
+
       try {
         const parsedParams = await FireSchema.models[name].schema.validate(values);
 
@@ -40,7 +42,7 @@ const createModel = (name, _schema, relationships = {}) => {
 
           const param = FireSchema.models[name].schema.params[key];
           const type = param ? param.type : undefined;
-          let defaultVal = param ? param.defaultValue : undefined;
+          const defaultVal = param ? param.defaultValue : undefined;
 
           if (type) {
             if (schema.isSchema(type)) {
@@ -51,30 +53,27 @@ const createModel = (name, _schema, relationships = {}) => {
 
             if (Array.isArray(type)) {
               if (type.length > 0 && schema.isSchema(type[0].type)) {
-                const t = type[0].type;
-
-                defaultVal = t.defaultValue;
-
                 const data = values[key];
 
                 if (FireSchema.models[name].relationships.hasMany[key]) {
                   const model = FireSchema.models[name].relationships.hasMany[key];
-                  const itemKeys = Object.keys(data);
-                  const pkName = model.schema.primaryKey;
 
                   this.values[key] = [];
 
-                  await itemKeys.reduce(async (hasManyPromise, k) => {
-                    await hasManyPromise;
+                  if (_.find(include, (inc) => inc.model === model)) {
+                    const itemKeys = Object.keys(data);
+                    const pkName = model.schema.primaryKey;
 
-                    const item = await model.findOne({ where: { [pkName]: k } });
+                    await itemKeys.reduce(async (hasManyPromise, k) => {
+                      await hasManyPromise;
 
-                    this.values[key].push(item);
-                  }, Promise.resolve());
-                } else {
-                  this.values[key] = await Promise.all(
-                    await _.map(data, async (d) => (t.validate(d))) || defaultVal,
-                  );
+                      const item = await model.findOne({ where: { [pkName]: k } });
+
+                      this.values[key].push(item);
+                    }, Promise.resolve());
+                  } else {
+                    this.values[key] = Array.isArray(data) ? data : Object.keys(data);
+                  }
                 }
 
                 this[`get${changeCase.upperCaseFirst(pluralize(key))}`] = this.makeGetterMulti(key);
@@ -106,6 +105,8 @@ const createModel = (name, _schema, relationships = {}) => {
       if (!this.relationships.hasMany[modelName]) {
         this.relationships.hasMany[modelName] = model;
       }
+
+      return this;
     }
 
     static async getIncluded(data = {}, model = undefined, as = undefined) {
@@ -144,11 +145,10 @@ const createModel = (name, _schema, relationships = {}) => {
      */
     static async findOne(options = {}) {
       try {
-        const { where = {}, include = {} } = options;
+        const { where = {} } = options;
 
         const whereKeys = Object.keys(where);
         const whereValues = Object.values(where);
-        const includeKeys = Object.keys(include); // eslint-disable-line
 
         if (whereKeys.length > 0) {
           if (whereKeys.includes(this.schema.primaryKey)) {
@@ -166,7 +166,7 @@ const createModel = (name, _schema, relationships = {}) => {
             const items = _.map(resultsObj, (d) => d);
 
             if (items.length > 0) {
-              return this.init(items[0]);
+              return this.init(items[0], options);
             }
           } else {
             const initialSearchKey = whereKeys[0];
@@ -195,7 +195,7 @@ const createModel = (name, _schema, relationships = {}) => {
             }, items);
 
             if (result.length > 0) {
-              return this.init(result[0]);
+              return this.init(result[0], options);
             }
           }
         }
@@ -247,9 +247,9 @@ const createModel = (name, _schema, relationships = {}) => {
 
   FireSchema.models[name].schema = _schema;
   FireSchema.models[name].refPath = changeCase.snakeCase(pluralize(name));
-  FireSchema.models[name].init = async (values) => {
+  FireSchema.models[name].init = async (values, options) => {
     const entity = new FireSchema.models[name](FireSchema.models[name].schema.primaryKey);
-    await entity.initialize(values);
+    await entity.initialize(values, options);
     return entity;
   };
 
